@@ -31,7 +31,7 @@ fun TransacaoScreen(
 
     // Cores personalizadas
     val corPrincipal = Color(0xFF006437) // Verde Palmeiras
-    val corTextoVerde = Color(0xFF2E7D32) // Verde Esmeralda para receitas
+    val corGasto = Color(0xFF2E7D32) // Verde Esmeralda para os gastos
 
     Scaffold(
         topBar = {
@@ -61,7 +61,7 @@ fun TransacaoScreen(
                 onMesAnoChange = viewModel::onMesAnoChange
             )
 
-            TotalPeriodo(transacoes = transacoes)
+            TotalPeriodo(transacoes = transacoes, corGasto = corGasto)
 
             LazyColumn(
                 modifier = Modifier
@@ -73,7 +73,7 @@ fun TransacaoScreen(
                     TransacaoItem(
                         transacao = transacao,
                         dateFormat = dateFormat,
-                        corReceita = corTextoVerde
+                        corGasto = corGasto
                     )
                 }
             }
@@ -87,10 +87,11 @@ private val NOMES_MESES = listOf(
 )
 
 @Composable
-private fun TotalPeriodo(transacoes: List<Transacao>) {
-    val totalReceitas = transacoes.filter { it.tipo == TipoTransacao.RECEITA }.sumOf { it.valor }
-    val totalDespesas = transacoes.filter { it.tipo == TipoTransacao.DESPESA }.sumOf { it.valor }
-    val saldo = totalReceitas - totalDespesas
+private fun TotalPeriodo(
+    transacoes: List<Transacao>,
+    corGasto: Color
+) {
+    val totalGasto = transacoes.sumOf { it.valor }
 
     Card(
         modifier = Modifier
@@ -98,42 +99,20 @@ private fun TotalPeriodo(transacoes: List<Transacao>) {
             .padding(horizontal = 16.dp, vertical = 4.dp),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Receitas:", style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    "+ R$ %.2f".format(totalReceitas),
-                    color = Color(0xFF2E7D32),
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Despesas:", style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    "- R$ %.2f".format(totalDespesas),
-                    color = Color(0xFFD32F2F),
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Saldo do Período:", fontWeight = FontWeight.Bold)
-                Text(
-                    "R$ %.2f".format(saldo),
-                    color = if (saldo >= 0) Color(0xFF2E7D32) else Color(0xFFD32F2F),
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium
-                )
-            }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Total de Gastos:", fontWeight = FontWeight.Bold)
+            Text(
+                text = "R$ %.2f".format(totalGasto), // Removido o "-"
+                color = corGasto,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleMedium
+            )
         }
     }
 }
@@ -199,7 +178,7 @@ private fun FiltroMesAno(
 fun TransacaoItem(
     transacao: Transacao,
     dateFormat: SimpleDateFormat,
-    corReceita: Color
+    corGasto: Color
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -226,10 +205,9 @@ fun TransacaoItem(
             }
 
             Text(
-                text = (if (transacao.tipo == TipoTransacao.DESPESA) "-" else "+") +
-                        " R$ ${"%.2f".format(transacao.valor)}",
+                text = "R$ ${"%.2f".format(transacao.valor)}", // Removido o "-"
                 style = MaterialTheme.typography.titleMedium,
-                color = if (transacao.tipo == TipoTransacao.DESPESA) Color(0xFFD32F2F) else corReceita,
+                color = corGasto,
                 fontWeight = FontWeight.Bold
             )
         }
