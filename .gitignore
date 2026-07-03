@@ -1,0 +1,11 @@
+# Pastas do Visual Studio
+.vs/
+bin/
+obj/
+*.user
+
+# Pastas do Java/IntelliJ
+.idea/
+target/
+*.iml
+*.class
