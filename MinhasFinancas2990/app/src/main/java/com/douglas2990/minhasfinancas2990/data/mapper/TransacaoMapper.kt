@@ -29,9 +29,10 @@ fun TransacaoEntity.toDomain(): Transacao {
         titulo = this.titulo ?: "Sem título",
         valor = this.valor,
         data = Date(this.data),
-        tipo = try { TipoTransacao.valueOf(this.tipo) } catch (_: Exception) { TipoTransacao.RECEITA },
+        tipo = try { TipoTransacao.valueOf(this.tipo) } catch (_: Exception) { TipoTransacao.DESPESA },
         categoria = this.categoria,
-        metodo = this.metodo
+        metodo = this.metodo,
+        sincronizado = this.sincronizado  // ← expõe o status de sync
     )
 }
 

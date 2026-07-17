@@ -98,5 +98,11 @@ dependencies {
     implementation(libs.logging.interceptor)
     implementation(libs.androidx.navigation.compose)
 
+    // WorkManager com suporte a Hilt
+// WorkManager com suporte a Hilt
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
+
     tasks.register("prepareKotlinBuildScriptModel") {}
 }

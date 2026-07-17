@@ -8,8 +8,9 @@ data class Transacao(
     val valor: Double,
     val data: Date,
     val tipo: TipoTransacao,
-    val categoria: String, // Adicione aqui
-    val metodo: String     // Adicione aqui
+    val categoria: String,
+    val metodo: String,
+    val sincronizado: Boolean = false // false = pendente de envio para a API
 )
 
 enum class TipoTransacao {

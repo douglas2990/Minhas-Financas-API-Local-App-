@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,22 +23,69 @@ import java.util.Locale
 @Composable
 fun TransacaoScreen(
     viewModel: TransacaoViewModel,
-    onNavigateToAdd: () -> Unit
+    onNavigateToAdd: () -> Unit,
+    onNavigateToPendentes: () -> Unit
 ) {
     val transacoes by viewModel.transacoesState.collectAsState()
     val mesSelecionado by viewModel.mesSelecionado.collectAsState()
     val anoSelecionado by viewModel.anoSelecionado.collectAsState()
+    val pendentesCount by viewModel.pendentesCount.collectAsState()
     val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
+    var menuExpandido by remember { mutableStateOf(false) }
+
     // Cores personalizadas
-    val corPrincipal = Color(0xFF006437) // Verde Palmeiras
-    val corGasto = Color(0xFF2E7D32) // Verde Esmeralda para os gastos
+    val corPrincipal = Color(0xFF006437)
+    val corTextoVerde = Color(0xFF2E7D32)
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Minhas Finanças 2990", color = Color.White) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = corPrincipal)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = corPrincipal),
+                actions = {
+                    // Badge no ícone quando há pendentes
+                    BadgedBox(
+                        badge = {
+                            if (pendentesCount > 0) {
+                                Badge { Text(pendentesCount.toString()) }
+                            }
+                        }
+                    ) {
+                        IconButton(onClick = { menuExpandido = true }) {
+                            Icon(
+                                Icons.Default.MoreVert,
+                                contentDescription = "Menu",
+                                tint = Color.White
+                            )
+                        }
+                    }
+                    DropdownMenu(
+                        expanded = menuExpandido,
+                        onDismissRequest = { menuExpandido = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Text("⏳")
+                                    Text("Verificar Pendentes")
+                                    if (pendentesCount > 0) {
+                                        Badge(containerColor = Color(0xFFFFA000)) {
+                                            Text(pendentesCount.toString())
+                                        }
+                                    }
+                                }
+                            },
+                            onClick = {
+                                menuExpandido = false
+                                onNavigateToPendentes()
+                            }
+                        )
+                    }
+                }
             )
         },
         floatingActionButton = {
@@ -61,7 +109,7 @@ fun TransacaoScreen(
                 onMesAnoChange = viewModel::onMesAnoChange
             )
 
-            TotalPeriodo(transacoes = transacoes, corGasto = corGasto)
+            TotalPeriodo(transacoes = transacoes)
 
             LazyColumn(
                 modifier = Modifier
@@ -73,7 +121,7 @@ fun TransacaoScreen(
                     TransacaoItem(
                         transacao = transacao,
                         dateFormat = dateFormat,
-                        corGasto = corGasto
+                        corReceita = corTextoVerde
                     )
                 }
             }
@@ -87,11 +135,10 @@ private val NOMES_MESES = listOf(
 )
 
 @Composable
-private fun TotalPeriodo(
-    transacoes: List<Transacao>,
-    corGasto: Color
-) {
-    val totalGasto = transacoes.sumOf { it.valor }
+private fun TotalPeriodo(transacoes: List<Transacao>) {
+    val totalReceitas = transacoes.filter { it.tipo == TipoTransacao.RECEITA }.sumOf { it.valor }
+    val totalDespesas = transacoes.filter { it.tipo == TipoTransacao.DESPESA }.sumOf { it.valor }
+    val saldo = totalReceitas - totalDespesas
 
     Card(
         modifier = Modifier
@@ -99,20 +146,42 @@ private fun TotalPeriodo(
             .padding(horizontal = 16.dp, vertical = 4.dp),
         elevation = CardDefaults.cardElevation(2.dp)
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Total de Gastos:", fontWeight = FontWeight.Bold)
-            Text(
-                text = "R$ %.2f".format(totalGasto), // Removido o "-"
-                color = corGasto,
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.titleMedium
-            )
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Receitas:", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "+ R$ %.2f".format(totalReceitas),
+                    color = Color(0xFF2E7D32),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Despesas:", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    "- R$ %.2f".format(totalDespesas),
+                    color = Color(0xFFD32F2F),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Saldo do Período:", fontWeight = FontWeight.Bold)
+                Text(
+                    "R$ %.2f".format(saldo),
+                    color = if (saldo >= 0) Color(0xFF2E7D32) else Color(0xFFD32F2F),
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
         }
     }
 }
@@ -178,7 +247,7 @@ private fun FiltroMesAno(
 fun TransacaoItem(
     transacao: Transacao,
     dateFormat: SimpleDateFormat,
-    corGasto: Color
+    corReceita: Color
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -189,11 +258,20 @@ fun TransacaoItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = transacao.titulo,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = transacao.titulo,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    // Indicador de status de sincronização
+                    if (!transacao.sincronizado) {
+                        Badge(containerColor = Color(0xFFFFA000)) {
+                            Text("⏳", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
                 Text(
                     text = "${transacao.categoria} • ${transacao.metodo}",
                     style = MaterialTheme.typography.bodySmall
@@ -205,9 +283,10 @@ fun TransacaoItem(
             }
 
             Text(
-                text = "R$ ${"%.2f".format(transacao.valor)}", // Removido o "-"
+                text = (if (transacao.tipo == TipoTransacao.DESPESA) "-" else "+") +
+                        " R$ ${"%.2f".format(transacao.valor)}",
                 style = MaterialTheme.typography.titleMedium,
-                color = corGasto,
+                color = if (transacao.tipo == TipoTransacao.DESPESA) Color(0xFFD32F2F) else corReceita,
                 fontWeight = FontWeight.Bold
             )
         }

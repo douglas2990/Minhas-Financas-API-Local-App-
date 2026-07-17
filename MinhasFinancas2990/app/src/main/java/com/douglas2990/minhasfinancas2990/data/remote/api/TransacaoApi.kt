@@ -1,5 +1,7 @@
 package com.douglas2990.minhasfinancas2990.data.remote.api
 
+import com.douglas2990.minhasfinancas2990.domain.model.CategoriaDto
+import com.douglas2990.minhasfinancas2990.domain.model.MetodoPagamentoDto
 import com.douglas2990.minhasfinancas2990.domain.model.TransacaoDto
 import retrofit2.Response
 import retrofit2.http.Body
@@ -12,4 +14,10 @@ interface TransacaoApi {
 
     @POST("api/gastos") // A rota correta para envio
     suspend fun enviarTransacao(@Body gasto: TransacaoDto): Response<Unit>
+
+    @GET("api/categorias")
+    suspend fun buscarCategorias(): List<CategoriaDto>
+
+    @GET("api/metodos")
+    suspend fun buscarMetodos(): List<MetodoPagamentoDto>
 }

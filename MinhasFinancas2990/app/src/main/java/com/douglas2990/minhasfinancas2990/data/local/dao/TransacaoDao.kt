@@ -24,6 +24,10 @@ interface TransacaoDao {
     @Query("SELECT * FROM transacoes WHERE sincronizado = 0")
     suspend fun getNaoSincronizadas(): List<TransacaoEntity>
 
+    // Reativo: emite sempre que a contagem de pendentes mudar (para o banner da UI)
+    @Query("SELECT COUNT(*) FROM transacoes WHERE sincronizado = 0")
+    fun contarNaoSincronizadas(): Flow<Int>
+
     @Update
     suspend fun update(transacao: TransacaoEntity)
 }
